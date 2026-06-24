@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lyoness1/lab-flow/schemas/workflow-run-response-v0.schema.json",
+  "title": "LabFlow Workflow Run Response v0",
+  "description": "Response body for GET /workflow-runs/{id} and POST /workflow-runs/{id}/review.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "workflow_run_id",
+    "state",
+    "source_message_id",
+    "patient_ref",
+    "normalized_observations",
+    "review_required"
+  ],
+  "properties": {
+    "workflow_run_id": {
+      "type": "string",
+      "description": "LabFlow processing ID."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "RECEIVED",
+        "WAITING_REVIEW",
+        "COMPLETED",
+        "FAILED"
+      ],
+      "description": "Current workflow state."
+    },
+    "source_message_id": {
+      "type": "string",
+      "description": "Upstream message_id from the inbound lab message."
+    },
+    "patient_ref": {
+      "type": "string",
+      "description": "Patient correlation ID from the inbound message."
+    },
+    "normalized_observations": {
+      "type": "array",
+      "description": "Observation results after pipeline processing.",
+      "items": {
+        "$ref": "normalized-observation-v0.schema.json"
+      }
+    },
+    "review_required": {
+      "type": "boolean",
+      "description": "True when state is WAITING_REVIEW."
+    },
+    "review_reason": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Matched rule descriptions when review_required is true."
+    }
+  }
+}

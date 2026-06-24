@@ -1,0 +1,22 @@
+{
+  "workflow_run_id": "wr_01HABC0002",
+  "state": "WAITING_REVIEW",
+  "source_message_id": "MSG-0002",
+  "patient_ref": "pt-9910",
+  "normalized_observations": [
+    {
+      "code": "potassium",
+      "value": 6.4,
+      "unit": "mmol/L",
+      "flag": "critical"
+    },
+    {
+      "code": "sodium",
+      "value": 137,
+      "unit": "mmol/L",
+      "flag": "normal"
+    }
+  ],
+  "review_required": true,
+  "review_reason": ["potassium >= 6.0 mmol/L"]
+}

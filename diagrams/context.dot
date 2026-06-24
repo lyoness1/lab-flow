@@ -1,0 +1,17 @@
+digraph G {
+  graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.5", ranksep="0.6"];
+  node [shape=box, style="rounded,filled", fillcolor="#f8f8f8", color="#333333", fontname="Helvetica", fontsize=11];
+  edge [color="#444444", fontname="Helvetica", fontsize=9];
+  sender [label="Upstream lab interface"];
+  api [label="LabFlow API\n(FastAPI)"];
+  db [shape=cylinder, style="filled", fillcolor="#eef3ff", label="Postgres"];
+  worker [label="LabFlow Worker\n(long-running process)"];
+  reviewer [label="Reviewer / operator"];
+  sender -> api [label="POST /lab-messages"];
+  api -> db [label="insert ingest + workflow\nstate = RECEIVED"];
+  worker -> db [label="poll, lock, process,\ncommit pipeline"];
+  db -> worker [label="RECEIVED rows"];
+  reviewer -> api [label="POST .../review"];
+  api -> db [label="update state + events"];
+  sender -> api [label="GET /workflow-runs/{id}", style=dashed];
+}

@@ -1,0 +1,21 @@
+{
+  "workflow_run_id": "wr_01HXYZ0001",
+  "state": "COMPLETED",
+  "source_message_id": "MSG-0001",
+  "patient_ref": "pt-8842",
+  "normalized_observations": [
+    {
+      "code": "potassium",
+      "value": 4.2,
+      "unit": "mmol/L",
+      "flag": "normal"
+    },
+    {
+      "code": "sodium",
+      "value": 139,
+      "unit": "mmol/L",
+      "flag": "normal"
+    }
+  ],
+  "review_required": false
+}
