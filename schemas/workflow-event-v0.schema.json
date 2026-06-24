@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lyoness1/lab-flow/schemas/workflow-event-v0.schema.json",
+  "title": "LabFlow Workflow Event v0",
+  "description": "One row in workflow_events audit log.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_type",
+    "phase",
+    "payload"
+  ],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "workflow.created",
+        "phase.completed",
+        "phase.failed",
+        "workflow.waiting_review",
+        "review.decided",
+        "workflow.completed",
+        "workflow.failed"
+      ],
+      "description": "Event category. See design doc Event log section."
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "validate",
+        "normalize",
+        "evaluate_rules",
+        "review"
+      ],
+      "description": "Pipeline phase that produced this event."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Phase-specific detail such as counts, errors, or rule hits."
+    }
+  }
+}

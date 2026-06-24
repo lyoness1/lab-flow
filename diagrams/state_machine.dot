@@ -1,0 +1,14 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="white", pad="0.2", nodesep="0.35", ranksep="0.45"];
+  node [shape=ellipse, style="filled", fillcolor="white", color="#333333", fontname="Helvetica", fontsize=10];
+  edge [color="#444444", fontname="Helvetica", fontsize=9];
+  received [label="RECEIVED"];
+  waiting [label="WAITING_REVIEW"];
+  completed [label="COMPLETED", shape=doublecircle];
+  failed [label="FAILED", shape=doublecircle];
+  received -> completed [label="worker pipeline\n(no critical flags)"];
+  received -> waiting [label="worker pipeline\n(critical flag)"];
+  received -> failed [label="validation or\nprocessing error"];
+  waiting -> completed [label="review approve"];
+  waiting -> failed [label="review reject"];
+}

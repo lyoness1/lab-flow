@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lyoness1/lab-flow/schemas/normalized-observation-v0.schema.json",
+  "title": "LabFlow Normalized Observation v0",
+  "description": "One observation row in LabFlow canonical internal shape after the transform step.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "code",
+    "value",
+    "unit",
+    "flag"
+  ],
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Analyte identifier (potassium, sodium, glucose)."
+    },
+    "value": {
+      "type": "number",
+      "description": "Numeric result copied from the inbound message."
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unit copied from the inbound message."
+    },
+    "flag": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "critical"
+      ],
+      "description": "Rule-evaluation outcome. critical means a threshold rule matched."
+    }
+  }
+}

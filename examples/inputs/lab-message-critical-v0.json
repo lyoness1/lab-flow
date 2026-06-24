@@ -1,0 +1,17 @@
+{
+  "schema_version": "lab-message-v0",
+  "message_id": "MSG-0002",
+  "patient_ref": "pt-9910",
+  "observations": [
+    {
+      "code": "potassium",
+      "value": 6.4,
+      "unit": "mmol/L"
+    },
+    {
+      "code": "sodium",
+      "value": 137,
+      "unit": "mmol/L"
+    }
+  ]
+}

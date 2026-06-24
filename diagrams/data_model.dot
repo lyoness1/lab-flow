@@ -1,0 +1,12 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="white", pad="0.2", nodesep="0.45", ranksep="0.55"];
+  node [shape=record, style="rounded,filled", fillcolor="white", color="#333333", fontname="Helvetica", fontsize=10];
+  edge [color="#444444", fontname="Helvetica", fontsize=9];
+  ingest [label="{ingest_messages|message_id TEXT PK\lpatient_ref TEXT\lschema_version TEXT\lraw_payload JSONB\lpayload_hash TEXT\lreceived_at TIMESTAMPTZ\l}"];
+  runs [label="{workflow_runs|workflow_run_id UUID PK\lmessage_id TEXT FK UNIQUE\lstate TEXT\lreview_reason JSONB\lreview_decision TEXT\lreview_decided_at TIMESTAMPTZ\lattempt_count INT\lcreated_at TIMESTAMPTZ\lupdated_at TIMESTAMPTZ\l}"];
+  events [label="{workflow_events|event_id BIGSERIAL PK\lworkflow_run_id UUID FK\levent_type TEXT\lphase TEXT\lpayload JSONB\lcreated_at TIMESTAMPTZ\l}"];
+  obs [label="{normalized_observations|observation_id BIGSERIAL PK\lmessage_id TEXT FK\lpatient_ref TEXT\lcode TEXT\lvalue DOUBLE PRECISION\lunit TEXT\lflag TEXT\l}"];
+  ingest -> runs [label="1 to 1"];
+  runs -> events [label="1 to many"];
+  ingest -> obs [label="1 to many"];
+}

@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# AI starter exports (reference copies; canonical docs live under docs/)
+LabFlow_*.md
+LabFlow_*.docx
+LabFlow_*.pdf
+
+# Personal notes (local reference only)
+docs/cursor-implementation-playbook.md
+docs/author-notes.md
+docs/implementation-plan.md
+
+# Python (future milestones)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local runtime
+*.db
+docker-compose.override.yml
