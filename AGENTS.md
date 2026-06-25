@@ -32,5 +32,6 @@ Schema validation tests against `examples/` ship with the Python skeleton PR.
 
 ## Repo layout (current)
 
-- Design phase: docs, schemas, examples, diagrams only
-- Next: Python package, FastAPI app, Pydantic models, tests under `src/` and `tests/`
+- `docs/`, `schemas/`, `examples/`, `diagrams/` — contracts and design
+- `src/labflow/` — FastAPI application
+- `tests/` — pytest suite (httpx TestClient)
