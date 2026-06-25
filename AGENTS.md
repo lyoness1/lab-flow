@@ -19,7 +19,7 @@ Update together in one change set:
 2. `schemas/`
 3. `examples/`
 
-Schema validation tests against `examples/` ship with the Python skeleton PR.
+Schema validation tests against `examples/` ship with the lab message ingest PR (before `POST /lab-messages` merges).
 
 ## Implementation rules
 
