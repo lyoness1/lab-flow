@@ -1,18 +1,21 @@
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
-from labflow.constants import API_V0_PREFIX
-from labflow.models.health import HealthResponse
+from labflow.api.v0.router import router as v0_router
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="LabFlow")
-    router = APIRouter(prefix=API_V0_PREFIX)
 
-    @router.get("/health", response_model=HealthResponse)
-    def health() -> HealthResponse:
-        return HealthResponse()
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        _request: Request,
+        exc: RequestValidationError,
+    ) -> JSONResponse:
+        return JSONResponse(status_code=400, content={"detail": exc.errors()})
 
-    app.include_router(router)
+    app.include_router(v0_router)
     return app
 
 
