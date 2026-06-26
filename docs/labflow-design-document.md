@@ -1,7 +1,9 @@
 # LabFlow Design Document
 
 **Status:** draft v0  
-**Last updated:** 2026-06-24
+**Last updated:** 2026-06-26
+
+This document describes intended system behavior and HTTP contracts. It is not a build plan — implementation may land in any order that preserves those contracts.
 
 ## Summary
 
@@ -81,7 +83,7 @@ The API never executes pipeline logic during ingest. The worker never serves HTT
 | Field | Source | Role |
 |---|---|---|
 | `message_id` | Upstream | Idempotency key for this transmission. |
-| `workflow_run_id` | LabFlow | Client-facing processing ID. |
+| `workflow_run_id` | LabFlow | Client-facing processing ID (opaque string). |
 | `patient_ref` | Upstream | Opaque patient correlation ID. |
 | `report_id` | Upstream (future) | Groups related messages for the same lab report. |
 
@@ -174,7 +176,7 @@ When multiple rules match, `review_reason` is a JSON array of matched rule descr
 
 ![Data model](../diagrams/data_model.png)
 
-Postgres is the durability boundary. JSON contract schemas live in `schemas/`. See [contributing.md](contributing.md) for updating diagrams.
+Postgres is the durability boundary. Implemented API contracts are Pydantic models in `src/labflow/models/`; JSON Schema files in `schemas/` cover endpoints not yet built. See [contributing.md](contributing.md) for updating diagrams.
 
 ### `ingest_messages`
 
@@ -236,7 +238,11 @@ Unique on `(message_id, code)`.
 
 ## API
 
-Base path: `/api/v0`. Fixtures: `examples/`.
+Base path: `/api/v0`. Implemented request/response shapes live in `src/labflow/models/` and appear in OpenAPI at `/docs`. JSON Schema files in `schemas/` describe contracts for endpoints not yet implemented.
+
+### Error responses
+
+Client-facing errors return a consistent JSON envelope with a machine-readable code, a human-readable message, and optional field-level details. Use the same envelope for validation failures (`400`), unknown resources (`404`), and conflict cases (`409`) unless an endpoint notes otherwise.
 
 ### `GET /health`
 
@@ -248,7 +254,7 @@ Base path: `/api/v0`. Fixtures: `examples/`.
 
 ### `POST /lab-messages`
 
-Accepts one lab-result message. Schema: `schemas/lab-message-v0.schema.json`. Response schema: `schemas/lab-message-ingest-response-v0.schema.json`.
+Accepts one lab-result message. Request shape: `LabMessage`. Response shape: `LabMessageCreateResponse` (see `src/labflow/models/lab_message.py`).
 
 **Request body:**
 
@@ -278,7 +284,7 @@ Accepts one lab-result message. Schema: `schemas/lab-message-v0.schema.json`. Re
 
 ```json
 {
-  "workflow_run_id": "wr_01HXYZ",
+  "workflow_run_id": "wr_f81d4fae7dec",
   "message_id": "MSG-0001",
   "state": "RECEIVED"
 }
@@ -287,11 +293,11 @@ Accepts one lab-result message. Schema: `schemas/lab-message-v0.schema.json`. Re
 | Code | Condition |
 |---|---|
 | `202` | New message accepted. |
-| `200` | Existing `message_id` with matching `payload_hash`. |
+| `200` | Existing `message_id` with matching body. |
 | `400` | Invalid payload. |
 | `409` | Same `message_id`, different body. |
 
-Persists to `ingest_messages` and `workflow_runs`; writes `workflow.created`. Processing continues in the [Worker](#worker).
+On accept, LabFlow persists the message, creates a workflow run in `RECEIVED`, records `workflow.created`, and returns the run ID. Automated processing is handled by the [Worker](#worker); the API does not run pipeline logic during ingest.
 
 ### `GET /workflow-runs/{workflow_run_id}`
 
@@ -301,7 +307,7 @@ Response schema: `schemas/workflow-run-response-v0.schema.json`.
 
 ```json
 {
-  "workflow_run_id": "wr_01HXYZ",
+  "workflow_run_id": "wr_f81d4fae7dec",
   "state": "COMPLETED",
   "source_message_id": "MSG-0001",
   "patient_ref": "pt-8842",
@@ -325,7 +331,7 @@ When `state` is `WAITING_REVIEW`, includes `review_reason` (JSON array) and `rev
 
 ```json
 {
-  "workflow_run_id": "wr_01HXYZ",
+  "workflow_run_id": "wr_f81d4fae7dec",
   "events": [
     {
       "event_id": 1,
@@ -367,13 +373,7 @@ Writes review columns on `workflow_runs` and events per [Event log](#event-log).
 
 ## Worker
 
-Standalone process started alongside the API in Docker Compose:
-
-```bash
-python -m labflow.worker run
-```
-
-`run` loops: claim a `RECEIVED` run, execute the [Pipeline](#pipeline), commit, sleep if idle, repeat. A `--once` flag processes at most one run and exits (for tests).
+Long-running background process that claims pending workflow runs and executes the [Pipeline](#pipeline). Runs alongside the API in local development (for example via Docker Compose).
 
 Pending work is any row with `state = 'RECEIVED'`. Claim query:
 
@@ -402,11 +402,9 @@ Any critical observation sends the run to `WAITING_REVIEW`. Matched rule descrip
 
 **Custom runner first.** The pipeline is short and synchronous inside the worker. A dedicated orchestrator adds operational cost before the domain model is stable.
 
-**Postgres as queue and state store.** Version `v0` uses `workflow_runs.state = RECEIVED` as the work queue. Workers poll and lock rows. A broker can sit between API and worker later.
+**Postgres as queue and state store.** `workflow_runs.state = RECEIVED` represents work ready for the worker. A broker can sit between API and worker later.
 
 **State row plus event log.** `workflow_runs.state` answers status queries directly. `workflow_events` records how processing unfolded. Both update in the same transaction on each transition.
-
-**Single worker entrypoint.** `run` matches Docker Compose deployment. Test-only flags handle pre-compose development.
 
 ## Reliability
 

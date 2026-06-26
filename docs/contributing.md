@@ -3,11 +3,22 @@
 ## Before you change behavior
 
 1. Read [labflow-design-document.md](labflow-design-document.md).
-2. If you change a contract, update together in one change set:
+2. If you change a contract for an **implemented** endpoint, update together:
   - design doc
-  - `schemas/`
-  - `examples/`
-3. Run tests before opening a PR. 
+  - Pydantic models in `src/labflow/models/`
+  - factories in `tests/factories/` when tests need sample data
+3. Run tests before opening a PR.
+
+## Contracts
+
+| Status | Source of truth |
+|---|---|
+| Implemented endpoint | Pydantic models in `src/labflow/models/` (also in OpenAPI at `/docs`) |
+| Not yet implemented | JSON Schema in `schemas/` |
+
+When you implement an endpoint, add Pydantic models and test factories, then delete the JSON Schema file for that contract if present.
+
+Test data for implemented endpoints lives in `tests/factories/` — not in `src/` and not as committed JSON under `examples/`.
 
 ## Design doc and diagrams
 
@@ -42,6 +53,4 @@ Personal files should be gitignored and stay on your machine.
 ## Pull requests
 
 - One behavioral change per PR where possible.
-- Do not commit application code (Postgres, worker, broker) before the design doc describes it.
 - Expand `README.md` as the project gains runnable commands and setup steps.
-
