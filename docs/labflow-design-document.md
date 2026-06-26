@@ -176,7 +176,7 @@ When multiple rules match, `review_reason` is a JSON array of matched rule descr
 
 ![Data model](../diagrams/data_model.png)
 
-Postgres is the durability boundary. JSON contract schemas live in `schemas/`. See [contributing.md](contributing.md) for updating diagrams.
+Postgres is the durability boundary. Implemented API contracts are Pydantic models in `src/labflow/models/`; JSON Schema files in `schemas/` cover endpoints not yet built. See [contributing.md](contributing.md) for updating diagrams.
 
 ### `ingest_messages`
 
@@ -238,31 +238,11 @@ Unique on `(message_id, code)`.
 
 ## API
 
-Base path: `/api/v0`. Fixtures: `examples/`. JSON Schema contracts: `schemas/`.
+Base path: `/api/v0`. Implemented request/response shapes live in `src/labflow/models/` and appear in OpenAPI at `/docs`. JSON Schema files in `schemas/` describe contracts for endpoints not yet implemented.
 
 ### Error responses
 
-Client-facing errors use a stable JSON envelope (`schemas/error-response-v0.schema.json`):
-
-```json
-{
-  "status": 400,
-  "code": "validation_error",
-  "message": "Request validation failed",
-  "details": [
-    {"field": "observations.0.code", "message": "..."}
-  ]
-}
-```
-
-| Field | Meaning |
-|---|---|
-| `status` | Mirrors the HTTP status code. |
-| `code` | Machine-readable error type (for example `validation_error`, `not_found`, `conflict`). |
-| `message` | Human-readable summary. |
-| `details` | Field-level issues when applicable; may be empty. |
-
-Use this envelope for invalid payloads (`400`), unknown resources (`404`), and conflict cases (`409`) unless an endpoint notes otherwise.
+Client-facing errors return a consistent JSON envelope with a machine-readable code, a human-readable message, and optional field-level details. Use the same envelope for validation failures (`400`), unknown resources (`404`), and conflict cases (`409`) unless an endpoint notes otherwise.
 
 ### `GET /health`
 
@@ -274,7 +254,7 @@ Use this envelope for invalid payloads (`400`), unknown resources (`404`), and c
 
 ### `POST /lab-messages`
 
-Accepts one lab-result message. Schema: `schemas/lab-message-v0.schema.json`. Response schema: `schemas/lab-message-create-response-v0.schema.json`.
+Accepts one lab-result message. Request shape: `LabMessage`. Response shape: `LabMessageCreateResponse` (see `src/labflow/models/lab_message.py`).
 
 **Request body:**
 
@@ -310,12 +290,12 @@ Accepts one lab-result message. Schema: `schemas/lab-message-v0.schema.json`. Re
 }
 ```
 
-| Code | Condition | Body |
-|---|---|---|
-| `202` | New message accepted. | Create response (below). |
-| `200` | Existing `message_id` with matching body. | Create response (below). |
-| `400` | Invalid payload. | [Error envelope](#error-responses). |
-| `409` | Same `message_id`, different body. | [Error envelope](#error-responses). |
+| Code | Condition |
+|---|---|
+| `202` | New message accepted. |
+| `200` | Existing `message_id` with matching body. |
+| `400` | Invalid payload. |
+| `409` | Same `message_id`, different body. |
 
 On accept, LabFlow persists the message, creates a workflow run in `RECEIVED`, records `workflow.created`, and returns the run ID. Automated processing is handled by the [Worker](#worker); the API does not run pipeline logic during ingest.
 
@@ -340,10 +320,10 @@ Response schema: `schemas/workflow-run-response-v0.schema.json`.
 
 When `state` is `WAITING_REVIEW`, includes `review_reason` (JSON array) and `review_required: true`.
 
-| Code | Condition | Body |
-|---|---|---|
-| `200` | Found. | Workflow run (above). |
-| `404` | Unknown `workflow_run_id`. | [Error envelope](#error-responses). |
+| Code | Condition |
+|---|---|
+| `200` | Found. |
+| `404` | Unknown `workflow_run_id`. |
 
 ### `GET /workflow-runs/{workflow_run_id}/events`
 
@@ -366,10 +346,10 @@ When `state` is `WAITING_REVIEW`, includes `review_reason` (JSON array) and `rev
 
 Paginated. Event shape matches `workflow_events`. See [Event log](#event-log).
 
-| Code | Condition | Body |
-|---|---|---|
-| `200` | Found. | Events list (above). |
-| `404` | Unknown `workflow_run_id`. | [Error envelope](#error-responses). |
+| Code | Condition |
+|---|---|
+| `200` | Found. |
+| `404` | Unknown `workflow_run_id`. |
 
 ### `POST /workflow-runs/{workflow_run_id}/review`
 
@@ -383,11 +363,11 @@ Allowed values: `approve`, `reject`.
 
 **Response `200`:** same shape as `GET /workflow-runs/{id}` with updated state.
 
-| Code | Condition | Body |
-|---|---|---|
-| `200` | Decision applied. | Workflow run. |
-| `404` | Unknown `workflow_run_id`. | [Error envelope](#error-responses). |
-| `409` | Run not in `WAITING_REVIEW`. | [Error envelope](#error-responses). |
+| Code | Condition |
+|---|---|
+| `200` | Decision applied. |
+| `404` | Unknown `workflow_run_id`. |
+| `409` | Run not in `WAITING_REVIEW`. |
 
 Writes review columns on `workflow_runs` and events per [Event log](#event-log).
 

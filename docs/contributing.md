@@ -3,25 +3,22 @@
 ## Before you change behavior
 
 1. Read [labflow-design-document.md](labflow-design-document.md).
-2. If you change a contract, update together in one change set:
+2. If you change a contract for an **implemented** endpoint, update together:
   - design doc
-  - `schemas/` (JSON Schema)
-  - `examples/`
   - Pydantic models in `src/labflow/models/`
+  - factories in `tests/factories/` when tests need sample data
 3. Run tests before opening a PR.
 
-## Contracts vs Python models
+## Contracts
 
-| Location | Purpose |
+| Status | Source of truth |
 |---|---|
-| `schemas/` | JSON Schema files — portable contract definitions |
-| `src/labflow/models/` | Pydantic models — runtime validation and OpenAPI types |
+| Implemented endpoint | Pydantic models in `src/labflow/models/` (also in OpenAPI at `/docs`) |
+| Not yet implemented | JSON Schema in `schemas/` |
 
-Keep names aligned (for example `LabMessageCreateResponse` ↔ `lab-message-create-response-v0.schema.json`).
+When you implement an endpoint, add Pydantic models and test factories, then delete the JSON Schema file for that contract if present.
 
-## API errors
-
-Client-facing error responses use a stable JSON envelope documented in the design doc and defined in `schemas/error-response-v0.schema.json`. Implementations should return this shape for validation failures (`400`) and other client errors (`404`, `409`) unless an endpoint specifies otherwise.
+Test data for implemented endpoints lives in `tests/factories/` — not in `src/` and not as committed JSON under `examples/`.
 
 ## Design doc and diagrams
 

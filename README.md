@@ -3,8 +3,8 @@
 LabFlow is a lab-result workflow service: accept inbound messages, process them through a durable pipeline, and expose status over HTTP.
 
 - Architecture: [docs/labflow-design-document.md](docs/labflow-design-document.md)
-- Contracts: [schemas/](schemas/) (JSON Schema) and [src/labflow/models/](src/labflow/models/) (Pydantic)
-- Fixtures: [examples/](examples/)
+- Contracts: [src/labflow/models/](src/labflow/models/) (implemented endpoints; OpenAPI at `/docs`)
+- Future contracts: [schemas/](schemas/) (JSON Schema for endpoints not yet built)
 - Contributing (including diagrams): [docs/contributing.md](docs/contributing.md)
 
 ## Development
@@ -62,7 +62,7 @@ Submit a lab message:
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v0/lab-messages \
   -H 'Content-Type: application/json' \
-  -d @examples/inputs/lab-message-normal-v0.json
+  -d "$(PYTHONPATH=tests python -c 'from factories.lab_message import lab_message_normal; import json; print(json.dumps(lab_message_normal().model_dump()))')"
 ```
 
 Expected response (`202`):
@@ -75,15 +75,4 @@ Expected response (`202`):
 }
 ```
 
-Invalid payloads return `400` with a stable error envelope (see [design doc — Error responses](docs/labflow-design-document.md#error-responses)):
-
-```json
-{
-  "status": 400,
-  "code": "validation_error",
-  "message": "Request validation failed",
-  "details": [
-    {"field": "observations.0.code", "message": "..."}
-  ]
-}
-```
+Invalid payloads return `400` with a consistent error envelope (see [design doc — Error responses](docs/labflow-design-document.md#error-responses)).

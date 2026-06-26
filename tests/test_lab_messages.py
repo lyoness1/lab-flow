@@ -1,15 +1,7 @@
-import json
-from pathlib import Path
-
 import pytest
 
+from factories.lab_message import lab_message_critical, lab_message_normal
 from labflow.constants import API_V0_PREFIX, WORKFLOW_RUN_ID_PREFIX
-
-EXAMPLES = Path(__file__).resolve().parent.parent / "examples" / "inputs"
-
-
-def _load_fixture(name: str) -> dict:
-    return json.loads((EXAMPLES / name).read_text())
 
 
 def _post_lab_message(client, payload: dict):
@@ -32,7 +24,7 @@ def _assert_validation_error(response, *, field: str) -> None:
 
 
 def test_create_lab_message_accepts_valid_fixture(client) -> None:
-    payload = _load_fixture("lab-message-normal-v0.json")
+    payload = lab_message_normal().model_dump(mode="json")
 
     response = _post_lab_message(client, payload)
 
@@ -44,7 +36,7 @@ def test_create_lab_message_accepts_valid_fixture(client) -> None:
 
 
 def test_create_lab_message_accepts_critical_fixture(client) -> None:
-    payload = _load_fixture("lab-message-critical-v0.json")
+    payload = lab_message_critical().model_dump(mode="json")
 
     response = _post_lab_message(client, payload)
 

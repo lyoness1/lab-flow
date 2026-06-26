@@ -21,6 +21,6 @@ class LabMessage(BaseModel):
 
 
 class LabMessageCreateResponse(BaseModel):
-    workflow_run_id: str
+    workflow_run_id: str = Field(pattern=r"^wr_[0-9a-f]{12}$")
     message_id: str
     state: Literal["RECEIVED"] = "RECEIVED"

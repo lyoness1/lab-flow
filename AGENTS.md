@@ -5,44 +5,45 @@ LabFlow is built in small, reviewable increments. Do not commit unless the user 
 ## Source of truth
 
 - `docs/labflow-design-document.md` — architecture and behavior
-- `schemas/` — JSON Schema contracts (keep aligned with the design doc)
-- `examples/` — fixture payloads for tests and docs
+- `src/labflow/models/` — Pydantic models for **implemented** endpoints (API contracts; OpenAPI at `/docs`)
+- `schemas/` — JSON Schema for **not-yet-implemented** endpoints only
+- `tests/factories/` — test data built from Pydantic models
 - `docs/contributing.md` — diagram regeneration and change workflow
 
 Personal checklists and notes (`docs/implementation-plan.md`, `docs/author-notes.md`) are gitignored and live only on the author's machine.
 
 ## Contract changes
 
-Update together in one change set:
+**Implemented endpoint** — update together:
 
 1. design doc
-2. `schemas/` (JSON Schema)
-3. `examples/`
-4. Pydantic models under `src/labflow/models/`
+2. Pydantic model(s) in `src/labflow/models/`
+3. factories in `tests/factories/` when tests need sample payloads
 
-JSON Schema filenames and Pydantic class names should match (for example `lab-message-create-response-v0.schema.json` ↔ `LabMessageCreateResponse`).
+When an endpoint ships, remove its JSON Schema file from `schemas/` if one exists.
 
-Contract validation is tested through endpoint behavior tests — not standalone schema-only suites.
+**Not-yet-implemented endpoint** — JSON Schema in `schemas/` plus design doc as needed.
+
+Contract validation is tested through endpoint behavior tests.
 
 ## Implementation rules
 
 - Implement only what the user requested for the current milestone.
 - Do not add Postgres tables, worker logic, queues, or Docker Compose before the design doc describes them for that milestone.
 - Write or update tests for every behavior change.
-- Keep schemas minimal — no fields the current milestone does not use.
+- Keep models minimal — no fields the current milestone does not use.
 - Run tests before reporting done.
 - When editing markdown the user may have open in preview, warn them to reload from disk after agent writes.
 
 ## Repo layout (current)
 
-- `docs/`, `schemas/`, `examples/`, `diagrams/` — contracts and design
-- `src/labflow/app.py` — app factory and global exception handlers
+- `docs/`, `schemas/`, `diagrams/` — design
+- `src/labflow/app.py` — app factory and validation error handler
 - `src/labflow/api/v0/` — versioned route modules (one file per resource)
-- `src/labflow/models/` — Pydantic request/response models (FastAPI convention)
+- `src/labflow/models/` — Pydantic request/response models
 - `src/labflow/utils.py` — small shared helpers (`create_id`, etc.)
+- `tests/factories/` — test data factories
 - `tests/` — pytest suite (httpx TestClient)
-
-Root `schemas/` holds JSON Schema contract files. `src/labflow/models/` holds the Python types that implement those contracts at runtime — different layers, different names.
 
 ## Running locally
 
