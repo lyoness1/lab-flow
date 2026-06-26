@@ -1,1 +1,3 @@
 API_V0_PREFIX = "/api/v0"
+
+WORKFLOW_RUN_ID_PREFIX = "wr_"

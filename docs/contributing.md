@@ -5,9 +5,23 @@
 1. Read [labflow-design-document.md](labflow-design-document.md).
 2. If you change a contract, update together in one change set:
   - design doc
-  - `schemas/`
+  - `schemas/` (JSON Schema)
   - `examples/`
-3. Run tests before opening a PR. 
+  - Pydantic models in `src/labflow/models/`
+3. Run tests before opening a PR.
+
+## Contracts vs Python models
+
+| Location | Purpose |
+|---|---|
+| `schemas/` | JSON Schema files — portable contract definitions |
+| `src/labflow/models/` | Pydantic models — runtime validation and OpenAPI types |
+
+Keep names aligned (for example `LabMessageCreateResponse` ↔ `lab-message-create-response-v0.schema.json`).
+
+## API errors
+
+Client-facing error responses use a stable JSON envelope documented in the design doc and defined in `schemas/error-response-v0.schema.json`. Implementations should return this shape for validation failures (`400`) and other client errors (`404`, `409`) unless an endpoint specifies otherwise.
 
 ## Design doc and diagrams
 
@@ -42,6 +56,4 @@ Personal files should be gitignored and stay on your machine.
 ## Pull requests
 
 - One behavioral change per PR where possible.
-- Do not commit application code (Postgres, worker, broker) before the design doc describes it.
 - Expand `README.md` as the project gains runnable commands and setup steps.
-

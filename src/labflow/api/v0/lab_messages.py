@@ -1,8 +1,8 @@
-from uuid import uuid4
-
 from fastapi import APIRouter, status
 
-from labflow.schemas.lab_message import LabMessage, LabMessageCreateResponse
+from labflow.constants import WORKFLOW_RUN_ID_PREFIX
+from labflow.models.lab_message import LabMessage, LabMessageCreateResponse
+from labflow.utils import create_id
 
 router = APIRouter()
 
@@ -15,6 +15,6 @@ router = APIRouter()
 def create_lab_message(body: LabMessage) -> LabMessageCreateResponse:
     # Persistence, idempotency (200/409), and workflow.created land in the Postgres PR.
     return LabMessageCreateResponse(
-        workflow_run_id=f"wr_{uuid4().hex[:12]}",
+        workflow_run_id=create_id(WORKFLOW_RUN_ID_PREFIX),
         message_id=body.message_id,
     )

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from labflow.schemas.health import HealthResponse
+from labflow.models.health import HealthResponse
 
 router = APIRouter()
 
