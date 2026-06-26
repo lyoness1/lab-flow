@@ -10,6 +10,7 @@ LabFlow_*.pdf
 docs/cursor-implementation-playbook.md
 docs/author-notes.md
 docs/implementation-plan.md
+docs/backlog.md
 
 # Python (future milestones)
 __pycache__/

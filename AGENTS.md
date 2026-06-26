@@ -10,7 +10,9 @@ LabFlow is built in small, reviewable increments. Do not commit unless the user 
 - `tests/factories/` — test data built from Pydantic models
 - `docs/contributing.md` — diagram regeneration and change workflow
 
-Personal checklists and notes (`docs/implementation-plan.md`, `docs/author-notes.md`) are gitignored and live only on the author's machine.
+Personal checklists and notes (`docs/backlog.md`, `docs/implementation-plan.md`, `docs/author-notes.md`) are gitignored and live only on the author's machine.
+
+When the author asks **what's next**, **what's deferred**, or **what's in the backlog**, read `docs/backlog.md` first, then `docs/implementation-plan.md` for milestone order. Update those files when deferring work out of a PR.
 
 ## Contract changes
 
