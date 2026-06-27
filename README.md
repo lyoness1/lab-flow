@@ -17,16 +17,20 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-### Run tests
+### Run checks
+
+Same as CI:
 
 ```bash
+ruff format --check .
+ruff check .
 pytest
 ```
 
-Verbose:
+Install the git hook (ruff + pytest before every `git push`):
 
 ```bash
-pytest -v
+pre-commit install --hook-type pre-push
 ```
 
 ### Run the API
