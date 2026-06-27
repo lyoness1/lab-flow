@@ -7,7 +7,27 @@
   - design doc
   - Pydantic models in `src/labflow/models/`
   - factories in `tests/factories/` when tests need sample data
-3. Run tests before opening a PR.
+3. Run checks before opening a PR (same commands as CI):
+
+```bash
+ruff format --check .
+ruff check .
+pytest
+```
+
+Or install the git hook once (runs ruff + pytest before every `git push`; CI still runs on PRs):
+
+```bash
+pip install -e ".[dev]"
+pre-commit install --hook-type pre-push
+```
+
+Fix formatting and safe lint issues locally:
+
+```bash
+ruff format .
+ruff check --fix .
+```
 
 ## Contracts
 

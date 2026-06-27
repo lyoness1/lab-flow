@@ -2,6 +2,22 @@
 
 LabFlow is built in small, reviewable increments. Do not commit unless the user asks.
 
+## Commits
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) for every commit:
+
+```
+<type>(<optional scope>): <short description>
+```
+
+Common types: `feat`, `fix`, `docs`, `test`, `refactor`, `ci`, `chore`, `style`.
+
+Examples:
+
+- `feat(api): accept lab messages with validation envelope`
+- `ci: add GitHub Actions for pytest and ruff`
+- `docs: update contributing workflow for factories`
+
 ## Source of truth
 
 - `docs/labflow-design-document.md` — architecture and behavior
@@ -53,6 +69,7 @@ Contract validation is tested through endpoint behavior tests.
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+pre-commit install --hook-type pre-push   # ruff + pytest before push
 pytest
 uvicorn labflow.app:app --reload
 ```
