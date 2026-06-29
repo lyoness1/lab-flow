@@ -3,6 +3,8 @@ from typing import Literal
 from pydantic import BaseModel
 from pydantic_core import ErrorDetails
 
+ErrorCode = Literal["validation_error", "conflict"]
+
 
 class ApiErrorDetail(BaseModel):
     field: str
@@ -10,9 +12,11 @@ class ApiErrorDetail(BaseModel):
 
 
 class ApiErrorResponse(BaseModel):
+    """Error envelope returned for client-facing failures."""
+
     status: int
-    code: Literal["validation_error"] = "validation_error"
-    message: str = "Request validation failed"
+    code: ErrorCode
+    message: str
     details: list[ApiErrorDetail]
 
     @classmethod
@@ -22,6 +26,7 @@ class ApiErrorResponse(BaseModel):
         *,
         status: int = 400,
     ) -> "ApiErrorResponse":
+        """Build a 400 envelope from FastAPI/Pydantic validation errors."""
         details: list[ApiErrorDetail] = []
         for error in errors:
             loc = error.get("loc", ())
@@ -30,4 +35,17 @@ class ApiErrorResponse(BaseModel):
             details.append(
                 ApiErrorDetail(field=field, message=error.get("msg", "Invalid value"))
             )
-        return cls(status=status, details=details)
+        return cls(
+            status=status,
+            code="validation_error",
+            message="Request validation failed",
+            details=details,
+        )
+
+    @classmethod
+    def from_conflict(
+        cls,
+        message: str = "Same message_id with a different request body",
+    ) -> "ApiErrorResponse":
+        """Build a 409 envelope for idempotency key / body mismatch."""
+        return cls(status=409, code="conflict", message=message, details=[])

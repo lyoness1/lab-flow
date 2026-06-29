@@ -5,17 +5,22 @@
 1. Read [labflow-design-document.md](labflow-design-document.md).
 2. If you change a contract for an **implemented** endpoint, update together:
   - design doc
-  - Pydantic models in `src/labflow/models/`
+  - table SQLModel classes in `src/labflow/database/`
+  - request/response Pydantic schemas in `src/labflow/api/v0/<resource>.py`
   - factories in `tests/factories/` when tests need sample data
-3. Run checks before opening a PR (same commands as CI):
+  - remove JSON Schema / examples for that endpoint
+3. Endpoints **not yet implemented** keep JSON Schema in `schemas/` and fixtures in `examples/`.
+4. Run checks before opening a PR (same commands as CI). Local Postgres setup: [README](../README.md#postgresql-setup-homebrew).
 
 ```bash
+export PATH="$(brew --prefix postgresql@16)/bin:$PATH"
+export TEST_DATABASE_URL=postgresql+psycopg://labflow:labflow@localhost:5432/labflow_test
 ruff format --check .
 ruff check .
 pytest
 ```
 
-Or install the git hook once (runs ruff + pytest before every `git push`; CI still runs on PRs):
+Optional pre-push hook (ruff only; full test suite runs in CI):
 
 ```bash
 pip install -e ".[dev]"
@@ -31,14 +36,11 @@ ruff check --fix .
 
 ## Contracts
 
-| Status | Source of truth |
-|---|---|
-| Implemented endpoint | Pydantic models in `src/labflow/models/` (also in OpenAPI at `/docs`) |
-| Not yet implemented | JSON Schema in `schemas/` |
+**Implemented endpoints:** table models in `src/labflow/database/`; request/response Pydantic schemas in `src/labflow/api/v0/`. FastAPI exposes them via OpenAPI at `/docs`.
 
-When you implement an endpoint, add Pydantic models and test factories, then delete the JSON Schema file for that contract if present.
+**Not yet implemented:** JSON Schema in `schemas/` and matching fixtures in `examples/`.
 
-Test data for implemented endpoints lives in `tests/factories/` — not in `src/` and not as committed JSON under `examples/`.
+**Tests:** sample data in `tests/factories/` — built from implemented models, not committed JSON for implemented endpoints.
 
 ## Design doc and diagrams
 

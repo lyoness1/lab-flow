@@ -1,8 +1,8 @@
-from labflow.models.lab_message import LabMessage, Observation
+from labflow.api.v0.lab_messages import LabMessagesBody, Observation
 
 
-def lab_message_normal() -> LabMessage:
-    return LabMessage(
+def lab_message_normal() -> LabMessagesBody:
+    return LabMessagesBody(
         schema_version="lab-message-v0",
         message_id="MSG-0001",
         patient_ref="pt-8842",
@@ -13,8 +13,8 @@ def lab_message_normal() -> LabMessage:
     )
 
 
-def lab_message_critical() -> LabMessage:
-    return LabMessage(
+def lab_message_critical() -> LabMessagesBody:
+    return LabMessagesBody(
         schema_version="lab-message-v0",
         message_id="MSG-0002",
         patient_ref="pt-9910",
