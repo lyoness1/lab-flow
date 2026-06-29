@@ -93,7 +93,7 @@ Duplicate `POST /lab-messages` with the same `message_id` and the same body retu
 
 Same `message_id` with a different body returns `409 Conflict`. The sender must issue a new `message_id` for changed content.
 
-**Body comparison:** compute SHA-256 over a canonical JSON form of the request body (stable key order, no insignificant whitespace) and store it as `payload_hash` on `ingest_messages`. On a duplicate `message_id`, compare the incoming hash to the stored hash. This matches common idempotency-key behavior (Stripe, PayPal, and similar APIs): the key identifies the operation; the payload must match for a safe retry.
+**Body comparison:** compute SHA-256 over a canonical JSON form of the request body (stable key order, no insignificant whitespace) and store it as `payload_hash` on `lab_messages`. On a duplicate `message_id`, compare the incoming hash to the stored hash. This matches common idempotency-key behavior (Stripe, PayPal, and similar APIs): the key identifies the operation; the payload must match for a safe retry.
 
 ## Workflow
 
@@ -116,7 +116,7 @@ Phase-level detail is recorded in `workflow_events`. The state column moves at w
 
 The worker runs three phases for each claimed `RECEIVED` run:
 
-1. **Validate** — verify `ingest_messages.raw_payload` against the lab-message contract.
+1. **Validate** — verify `lab_messages.raw_payload` against the lab-message contract.
 2. **Normalize** — upsert rows into `normalized_observations`.
 3. **Evaluate rules** — set `flag` on each row; set terminal state to `COMPLETED` or `WAITING_REVIEW`.
 
@@ -176,9 +176,22 @@ When multiple rules match, `review_reason` is a JSON array of matched rule descr
 
 ![Data model](../diagrams/data_model.png)
 
-Postgres is the durability boundary. Implemented API contracts are Pydantic models in `src/labflow/models/`; JSON Schema files in `schemas/` cover endpoints not yet built. See [contributing.md](contributing.md) for updating diagrams.
+Postgres is the durability boundary. **Table** models are SQLModel classes in `src/labflow/database/`. **Request and response** shapes for implemented routes live alongside the route in `src/labflow/api/v0/`. JSON Schema files under `schemas/` remain for endpoints not yet implemented in Python (for example `WorkflowRunResponse`). See [contributing.md](contributing.md) for updating diagrams.
 
-### `ingest_messages`
+### Python models (implemented in this milestone)
+
+| Class | Location | Role |
+|---|---|---|
+| `LabMessagesBody` | `api/v0/lab_messages.py` | POST request body |
+| `LabMessagesResponse` | `api/v0/lab_messages.py` | POST response body |
+| `Observation` | `api/v0/lab_messages.py` | Nested analyte in the request body |
+| `HealthResponse` | `api/v0/health.py` | GET /health response |
+| `ApiErrorResponse` | `api/v0/errors.py` | Client error envelope |
+| `LabMessage` | `database/lab_message.py` | Table: `lab_messages` |
+| `WorkflowRun` | `database/workflow.py` | Table: `workflow_runs` |
+| `WorkflowEvent` | `database/workflow.py` | Table: `workflow_events` |
+
+### `lab_messages`
 
 | Column | Type | Notes |
 |---|---|---|
@@ -194,7 +207,7 @@ Postgres is the durability boundary. Implemented API contracts are Pydantic mode
 | Column | Type | Notes |
 |---|---|---|
 | `workflow_run_id` | `UUID PK DEFAULT gen_random_uuid()` | Returned to clients. |
-| `message_id` | `TEXT NOT NULL UNIQUE REFERENCES ingest_messages` | One run per message in version `v0`. |
+| `message_id` | `TEXT NOT NULL UNIQUE REFERENCES lab_messages` | One run per message in version `v0`. |
 | `state` | `TEXT NOT NULL` | See [State machine](#state-machine). |
 | `review_reason` | `JSONB` | Matched rule descriptions when entering `WAITING_REVIEW`. |
 | `review_decision` | `TEXT` | `approve` or `reject`. |
@@ -227,8 +240,8 @@ One row per observation. The normalize phase flattens the nested `observations` 
 | Column | Type | Notes |
 |---|---|---|
 | `observation_id` | `BIGSERIAL PK` | |
-| `message_id` | `TEXT NOT NULL REFERENCES ingest_messages` | |
-| `patient_ref` | `TEXT NOT NULL` | Copied from the message so observation queries avoid joining `ingest_messages`. |
+| `message_id` | `TEXT NOT NULL REFERENCES lab_messages` | |
+| `patient_ref` | `TEXT NOT NULL` | Copied from the message so observation queries avoid joining `lab_messages`. |
 | `code` | `TEXT NOT NULL` | |
 | `value` | `DOUBLE PRECISION NOT NULL` | |
 | `unit` | `TEXT NOT NULL` | |
@@ -238,7 +251,7 @@ Unique on `(message_id, code)`.
 
 ## API
 
-Base path: `/api/v0`. Implemented request/response shapes live in `src/labflow/models/` and appear in OpenAPI at `/docs`. JSON Schema files in `schemas/` describe contracts for endpoints not yet implemented.
+Base path: `/api/v0`. Request and response shapes for implemented routes live in `src/labflow/api/v0/`; table mappings live in `src/labflow/database/`. OpenAPI at `/docs`.
 
 ### Error responses
 
@@ -254,7 +267,7 @@ Client-facing errors return a consistent JSON envelope with a machine-readable c
 
 ### `POST /lab-messages`
 
-Accepts one lab-result message. Request shape: `LabMessage`. Response shape: `LabMessageCreateResponse` (see `src/labflow/models/lab_message.py`).
+Accepts one lab-result message. Request shape: `LabMessagesBody`. Response shape: `LabMessagesResponse` (see `src/labflow/api/v0/lab_messages.py`).
 
 **Request body:**
 
@@ -301,7 +314,7 @@ On accept, LabFlow persists the message, creates a workflow run in `RECEIVED`, r
 
 ### `GET /workflow-runs/{workflow_run_id}`
 
-Response schema: `schemas/workflow-run-response-v0.schema.json`.
+Response shape: `WorkflowRunResponse` (future Pydantic class; JSON Schema in `schemas/` until implemented).
 
 **Response `200`:**
 

@@ -3,19 +3,23 @@
 LabFlow is a lab-result workflow service: accept inbound messages, process them through a durable pipeline, and expose status over HTTP.
 
 - Architecture: [docs/labflow-design-document.md](docs/labflow-design-document.md)
-- Contracts: [src/labflow/models/](src/labflow/models/) (implemented endpoints; OpenAPI at `/docs`)
-- Future contracts: [schemas/](schemas/) (JSON Schema for endpoints not yet built)
+- Implemented API schemas: [src/labflow/api/v0/](src/labflow/api/v0/) (OpenAPI at `/docs`)
+- Database tables: [src/labflow/database/](src/labflow/database/)
+- Future contracts: [schemas/](schemas/) and [examples/](examples/)
 - Contributing (including diagrams): [docs/contributing.md](docs/contributing.md)
 
 ## Development
 
-Requires Python 3.11+.
+Requires Python 3.11+ and PostgreSQL (local API and tests).
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+export DATABASE_URL=postgresql+psycopg://labflow:labflow@localhost:5432/labflow
 ```
+
+Tests and the API use `DATABASE_URL` (default above). Create the database and role locally before running `pytest`.
 
 ### Run checks
 

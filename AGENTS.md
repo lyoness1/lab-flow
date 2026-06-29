@@ -21,26 +21,42 @@ Examples:
 ## Source of truth
 
 - `docs/labflow-design-document.md` — architecture and behavior
-- `src/labflow/models/` — Pydantic models for **implemented** endpoints (API contracts; OpenAPI at `/docs`)
-- `schemas/` — JSON Schema for **not-yet-implemented** endpoints only
-- `tests/factories/` — test data built from Pydantic models
+- `src/labflow/database/` — SQLModel **table** classes (Postgres ORM)
+- `src/labflow/api/v0/` — route handlers plus Pydantic request/response schemas per resource
+- `schemas/` — JSON Schema for endpoints **not yet** implemented in Python (for example `WorkflowRunResponse`)
+- `examples/` — JSON fixtures paired with those schemas (not for implemented endpoints)
+- `tests/factories/` — test data built from implemented API schemas
 - `docs/contributing.md` — diagram regeneration and change workflow
 
 Personal checklists and notes (`docs/backlog.md`, `docs/implementation-plan.md`, `docs/author-notes.md`) are gitignored and live only on the author's machine.
 
 When the author asks **what's next**, **what's deferred**, or **what's in the backlog**, read `docs/backlog.md` first, then `docs/implementation-plan.md` for milestone order. Update those files when deferring work out of a PR.
 
+## Directory layout (models vs API schemas)
+
+This project uses **option (a)** — the layout common in production FastAPI services at moderate scale:
+
+| Layer | Location | Contents |
+|---|---|---|
+| **Database / ORM** | `src/labflow/database/` | SQLModel `table=True` classes, engine, sessions |
+| **HTTP API** | `src/labflow/api/v0/` | Routes + Pydantic schemas (`LabMessagesBody`, `HealthResponse`, `ApiErrorResponse`, …) |
+
+Pydantic-only types that belong to a specific route live in that route's module. Shared error envelopes live in `api/v0/errors.py`.
+
+Alternatives we did **not** choose:
+
+- **(b)** single `models/` for tables and schemas — blurs persistence vs HTTP boundaries as the project grows.
+- **(c)** `models/` for all Pydantic + `database/` for tables — splits related API types across two trees; useful at very large scale with a dedicated `schemas/` package, but heavier than LabFlow v0 needs.
+
 ## Contract changes
 
 **Implemented endpoint** — update together:
 
 1. design doc
-2. Pydantic model(s) in `src/labflow/models/`
-3. factories in `tests/factories/` when tests need sample payloads
-
-When an endpoint ships, remove its JSON Schema file from `schemas/` if one exists.
-
-**Not-yet-implemented endpoint** — JSON Schema in `schemas/` plus design doc as needed.
+2. table SQLModel class(es) in `src/labflow/database/`
+3. request/response Pydantic schemas in `src/labflow/api/v0/<resource>.py`
+4. factories in `tests/factories/` when tests need sample payloads
+5. remove JSON Schema and examples for that endpoint
 
 Contract validation is tested through endpoint behavior tests.
 
@@ -50,18 +66,18 @@ Contract validation is tested through endpoint behavior tests.
 - Do not add Postgres tables, worker logic, queues, or Docker Compose before the design doc describes them for that milestone.
 - Write or update tests for every behavior change.
 - Keep models minimal — no fields the current milestone does not use.
-- Run tests before reporting done.
+- Run tests before reporting done (requires PostgreSQL; see README).
 - When editing markdown the user may have open in preview, warn them to reload from disk after agent writes.
 
 ## Repo layout (current)
 
-- `docs/`, `schemas/`, `diagrams/` — design
+- `docs/`, `diagrams/`, `schemas/`, `examples/` — design and not-yet-implemented contracts
 - `src/labflow/app.py` — app factory and validation error handler
-- `src/labflow/api/v0/` — versioned route modules (one file per resource)
-- `src/labflow/models/` — Pydantic request/response models
-- `src/labflow/utils.py` — small shared helpers (`create_id`, etc.)
+- `src/labflow/database/` — SQLModel tables, engine, sessions
+- `src/labflow/api/v0/` — routes and Pydantic API schemas per resource
+- `src/labflow/utils.py` — shared helpers (`create_id`, `compute_payload_hash`, etc.)
 - `tests/factories/` — test data factories
-- `tests/` — pytest suite (httpx TestClient)
+- `tests/` — pytest suite (httpx TestClient, PostgreSQL)
 
 ## Running locally
 
@@ -69,6 +85,7 @@ Contract validation is tested through endpoint behavior tests.
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+export DATABASE_URL=postgresql+psycopg://labflow:labflow@localhost:5432/labflow
 pre-commit install --hook-type pre-push   # ruff + pytest before push
 pytest
 uvicorn labflow.app:app --reload

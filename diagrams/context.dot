@@ -8,7 +8,7 @@ digraph G {
   worker [label="LabFlow Worker\n(long-running process)"];
   reviewer [label="Reviewer / operator"];
   sender -> api [label="POST /lab-messages"];
-  api -> db [label="insert ingest + workflow\nstate = RECEIVED"];
+  api -> db [label="insert lab_messages + workflow\nstate = RECEIVED"];
   worker -> db [label="poll, lock, process,\ncommit pipeline"];
   db -> worker [label="RECEIVED rows"];
   reviewer -> api [label="POST .../review"];
