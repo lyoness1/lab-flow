@@ -10,16 +10,17 @@
   - factories in `tests/factories/` when tests need sample data
   - remove JSON Schema / examples for that endpoint
 3. Endpoints **not yet implemented** keep JSON Schema in `schemas/` and fixtures in `examples/`.
-4. Run checks before opening a PR (same commands as CI):
+4. Run checks before opening a PR (same commands as CI). Local Postgres setup: [README](../README.md#postgresql-setup-homebrew).
 
 ```bash
-export DATABASE_URL=postgresql+psycopg://labflow:labflow@localhost:5432/labflow
+export PATH="$(brew --prefix postgresql@16)/bin:$PATH"
+export TEST_DATABASE_URL=postgresql+psycopg://labflow:labflow@localhost:5432/labflow_test
 ruff format --check .
 ruff check .
 pytest
 ```
 
-Or install the git hook once (runs ruff + pytest before every `git push`; CI still runs on PRs):
+Optional pre-push hook (ruff only; full test suite runs in CI):
 
 ```bash
 pip install -e ".[dev]"

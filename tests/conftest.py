@@ -30,9 +30,10 @@ def _truncate_lab_tables() -> None:
 
 @pytest.fixture(scope="session")
 def database_url() -> str:
+    """Postgres URL for integration tests (separate from dev ``DATABASE_URL``)."""
     return os.environ.get(
-        "DATABASE_URL",
-        "postgresql+psycopg://labflow:labflow@localhost:5432/labflow",
+        "TEST_DATABASE_URL",
+        "postgresql+psycopg://labflow:labflow@localhost:5432/labflow_test",
     )
 
 

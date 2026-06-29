@@ -66,7 +66,7 @@ Contract validation is tested through endpoint behavior tests.
 - Do not add Postgres tables, worker logic, queues, or Docker Compose before the design doc describes them for that milestone.
 - Write or update tests for every behavior change.
 - Keep models minimal — no fields the current milestone does not use.
-- Run tests before reporting done (requires PostgreSQL; see README).
+- Run tests before reporting done (requires PostgreSQL + `labflow_test`; see README).
 - When editing markdown the user may have open in preview, warn them to reload from disk after agent writes.
 
 ## Repo layout (current)
@@ -81,12 +81,17 @@ Contract validation is tested through endpoint behavior tests.
 
 ## Running locally
 
+PostgreSQL 16 via Homebrew — full setup in README (`PostgreSQL setup` section).
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+export PATH="$(brew --prefix postgresql@16)/bin:$PATH"
+brew services start postgresql@16
 export DATABASE_URL=postgresql+psycopg://labflow:labflow@localhost:5432/labflow
-pre-commit install --hook-type pre-push   # ruff + pytest before push
+export TEST_DATABASE_URL=postgresql+psycopg://labflow:labflow@localhost:5432/labflow_test
+pre-commit install --hook-type pre-push   # ruff only; pytest runs in CI
 pytest
 uvicorn labflow.app:app --reload
 ```
